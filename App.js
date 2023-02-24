@@ -13,7 +13,6 @@ import { createBottomTabNavigator } from '@react-navigation/bottom-tabs';
 
 // Create the navigator
 const Stack = createStackNavigator();
-// const Tab = createBottomTabNavigator();
 
 export default class App extends React.Component {
   

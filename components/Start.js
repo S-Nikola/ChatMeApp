@@ -1,6 +1,7 @@
 import React from 'react';
 import { View, Text, TextInput, StyleSheet, ImageBackground, TouchableOpacity } from 'react-native';
 
+// Define background colors
 const backgroundColors = {
   black: { backgroundColor: '#000000'},
   grey: { backgroundColor: '#8a95a5'},
@@ -18,13 +19,16 @@ export default class Start extends React.Component {
     const { black, grey, purple, orange} = backgroundColors;
     return (
       <View style={styles.container}>
+        {/* Set the background image */}
         <ImageBackground
           source={require('../assets/background-image.png')}
           style={[styles.container, styles.image]}
         >
+          {/* The title area */}
           <View style={styles.title}>
             <Text style={styles.titleText}>ChatMeApp</Text>
           </View>
+          {/* The input area */}
           <View style={styles.inputBox} >
             <TextInput
               style={styles.nameBox}
@@ -32,6 +36,7 @@ export default class Start extends React.Component {
               value={this.state.name}
               placeholder='Enter a name'
               />
+              {/* Change colors for the Chat screen */}
               <View>
                 <Text style={styles.chooseBackground} >Choose your Background:</Text>
                 <View style={styles.colorWrapper}>
@@ -57,6 +62,7 @@ export default class Start extends React.Component {
                   />
                 </View>
               </View>
+              {/* Button to continue to the chat screen */}
               <TouchableOpacity
                 style={[styles.nameBox, styles.startChat]}
                 onPress={() => 
@@ -67,7 +73,7 @@ export default class Start extends React.Component {
                 })
                 }
                 >
-                <Text style={[styles.colorSelector, styles.startChat]} >
+                <Text style={[ styles.startChatText ]} >
                   Start Chatting
                 </Text>
                 </TouchableOpacity>
@@ -149,9 +155,12 @@ const styles = StyleSheet.create({
     backgroundColor: '#757083',
     width: '88%',
     justifyContent: 'center',
+  },
+
+  startChatText: {
     textAlign: 'center',
     fontSize: 16,
     color: '#fff',
     fontWeight: '600',
-  },
+  }
 })
