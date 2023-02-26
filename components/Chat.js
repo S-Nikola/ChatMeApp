@@ -1,7 +1,42 @@
 import React from 'react';
 import { View, Text, Button, TextInput, StyleSheet, Platform, KeyboardAvoidingView } from 'react-native';
 import { GiftedChat, Bubble } from 'react-native-gifted-chat'
+const firebase = require('firebase');
+require('firebase/firestore');
 
+// Copied 
+// // Import the functions you need from the SDKs you need
+// import { initializeApp } from "firebase/app";
+// // TODO: Add SDKs for Firebase products that you want to use
+// // https://firebase.google.com/docs/web/setup#available-libraries
+
+// // Your web app's Firebase configuration
+// const firebaseConfig = {
+//   apiKey: "AIzaSyAs8394dgpeBpWqBpe8LSgN3OiqKU7yKd8",
+//   authDomain: "chatmeapp-bc433.firebaseapp.com",
+//   projectId: "chatmeapp-bc433",
+//   storageBucket: "chatmeapp-bc433.appspot.com",
+//   messagingSenderId: "545185976878",
+//   appId: "1:545185976878:web:afde6c26fe030b7e6c85bf"
+// };
+
+/*Initialize Firebase*/
+const app = initializeApp(firebaseConfig);
+
+// Your web app's Firebase configuration
+const firebaseConfig = {
+  apiKey: "AIzaSyAs8394dgpeBpWqBpe8LSgN3OiqKU7yKd8",
+  authDomain: "chatmeapp-bc433.firebaseapp.com",
+  projectId: "chatmeapp-bc433",
+  storageBucket: "chatmeapp-bc433.appspot.com",
+  messagingSenderId: "545185976878",
+};
+
+if (!firebase.apps.length){
+  firebase.initializeApp(firebaseConfig);
+  }
+
+this.referenceChatMessages = firebase.firestore().collection("messages");
 
 export default class Chat extends React.Component {
   constructor(props) {
@@ -13,7 +48,10 @@ export default class Chat extends React.Component {
     };
   }
 
+
+
   componentDidMount() {
+    //this.referenceChatMessages = firebase.firestore().collection("messages");
     // Set the name property to be included in the navigation bar
     let name = this.props.route.params.name;
 
