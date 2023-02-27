@@ -1,72 +1,43 @@
 import React from 'react';
 import { View, Text, Button, TextInput, StyleSheet, Platform, KeyboardAvoidingView } from 'react-native';
-import { GiftedChat, Bubble } from 'react-native-gifted-chat'
-const firebase = require('firebase');
-require('firebase/firestore');
+import { GiftedChat, Bubble } from 'react-native-gifted-chat';
+import { initializeApp } from "firebase/app";
 
-// Copied 
-// // Import the functions you need from the SDKs you need
-// import { initializeApp } from "firebase/app";
-// // TODO: Add SDKs for Firebase products that you want to use
-// // https://firebase.google.com/docs/web/setup#available-libraries
-
-// // Your web app's Firebase configuration
-// const firebaseConfig = {
-//   apiKey: "AIzaSyAs8394dgpeBpWqBpe8LSgN3OiqKU7yKd8",
-//   authDomain: "chatmeapp-bc433.firebaseapp.com",
-//   projectId: "chatmeapp-bc433",
-//   storageBucket: "chatmeapp-bc433.appspot.com",
-//   messagingSenderId: "545185976878",
-//   appId: "1:545185976878:web:afde6c26fe030b7e6c85bf"
-// };
-
-/*Initialize Firebase*/
-const app = initializeApp(firebaseConfig);
-
-// Your web app's Firebase configuration
-const firebaseConfig = {
-  apiKey: "AIzaSyAs8394dgpeBpWqBpe8LSgN3OiqKU7yKd8",
-  authDomain: "chatmeapp-bc433.firebaseapp.com",
-  projectId: "chatmeapp-bc433",
-  storageBucket: "chatmeapp-bc433.appspot.com",
-  messagingSenderId: "545185976878",
-};
-
-if (!firebase.apps.length){
-  firebase.initializeApp(firebaseConfig);
-  }
-
-this.referenceChatMessages = firebase.firestore().collection("messages");
+const firebase = require("firebase");
+require("firebase/firestore");
 
 export default class Chat extends React.Component {
-  constructor(props) {
-    super(props);
-    this.state = { 
-      name: '', 
-      color: this.props.color ,
-      messages: []
+  constructor() {
+    super();
+    this.state = {
+      messages: [],
+      uid: 0,
+      user: {
+        _id: "",
+        avatar: "",
+        name: "",
+      },
     };
+
+    if (!firebase.apps.length) {
+      firebase.initializeApp({
+        apiKey: "AIzaSyAs8394dgpeBpWqBpe8LSgN3OiqKU7yKd8",
+        authDomain: "chatmeapp-bc433.firebaseapp.com",
+        projectId: "chatmeapp-bc433",
+        storageBucket: "chatmeapp-bc433.appspot.com",
+        messagingSenderId: "545185976878",
+        appId: "1:545185976878:web:afde6c26fe030b7e6c85bf"
+      });
+    }
+
+    this.referenceChatMessages = firebase.firestore().collection("messages");
   }
 
-
-
   componentDidMount() {
-    //this.referenceChatMessages = firebase.firestore().collection("messages");
-    // Set the name property to be included in the navigation bar
     let name = this.props.route.params.name;
-
+    
     this.setState({
       messages: [
-        {
-          _id: 1,
-          text: `Hi ${name}, how are you?`,
-          createdAt: new Date(),
-          user: {
-            _id: 2,
-            name: 'React Native',
-            avatar: 'https://placeimg.com/140/140/any',
-          },
-        },
         {
           _id: 2,
           text: `${name} has entered the chat`,
@@ -74,14 +45,78 @@ export default class Chat extends React.Component {
           system: true,
         },
       ],
-    })
+    });
+    this.props.navigation.setOptions({ title: name });
+    // create a reference to the active user's documents
+    this.referenceChatMessagesUser = firebase
+      .firestore()
+      .collection("messages")
+      .where("uid", "==", this.state.uid);
+    this.unsubscribe = this.referenceChatMessages.onSnapshot(this.onCollectionUpdate);
+
+    this.authUnsubscribe = firebase.auth().onAuthStateChanged((user) => {
+      if (!user) {
+        firebase.auth().signInAnonymously();
+      }
+      // update user state with current user data
+      this.setState({
+        uid: user?.uid,
+        messages: [],
+      });
+      // listen for collection changes for current user
+      this.unsubscribe = this.referenceChatMessages.orderBy("createdAt", "desc").onSnapshot(this.onCollectionUpdate);
+    });
+  }
+
+  componentWillUnmount() {
+    // stop listening to authentication
+    this.authUnsubscribe();
+    // stop listening for changes
+    this.unsubscribe();
   }
 
   onSend(messages = []) {
-    this.setState((previousState) => ({
-      messages: GiftedChat.append(previousState.messages, messages),
-    }));
+    this.setState(
+      (previousState) => ({
+        messages: GiftedChat.append(previousState.messages, messages),
+      }),
+      () => {
+        this.addMessage();
+      }
+    );
   }
+
+  // save message to Firestore
+  addMessage = () => {
+    const message = this.state.messages[0];
+    this.referenceChatMessages.add({
+      uid: this.state.uid,
+      _id: message._id,
+      text: message.text || "",
+      createdAt: message.createdAt,
+      user: message.user,
+    });
+  };
+
+  onCollectionUpdate = (querySnapshot) => {
+    const messages = [];
+    // go through each document
+    querySnapshot.forEach((doc) => {
+      // get the QueryDocumentSnapshot's data
+      let data = doc.data();
+      messages.push({
+        _id: data._id,
+        createdAt: data.createdAt.toDate(),
+        text: data.text,
+        user: {
+          _id: data.user._id,
+          name: data.user.name,
+          avatar: data.user.avatar || "",
+        },
+      });
+    });
+    this.setState({ messages });
+  };
 
   renderBubble(props) {
     return (
@@ -95,7 +130,7 @@ export default class Chat extends React.Component {
       />
     )
   }
-  
+
   render() {
     let name = this.props.route.params.name;
     this.props.navigation.setOptions({ title: name })
@@ -107,7 +142,8 @@ export default class Chat extends React.Component {
         messages={this.state.messages}
         onSend={(messages) => this.onSend(messages)}
         user={{
-          _id: 1,
+          _id: this.state.user._id,
+          avatar: 'https://placeimg.com/140/140/any'
         }}
       />
 
@@ -124,6 +160,4 @@ export default class Chat extends React.Component {
 const styles = StyleSheet.create({
   container: {
     flex:1,
-    // justifyContent: 'center',
-    // alignItems: 'center',
   },})
