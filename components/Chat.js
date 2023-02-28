@@ -150,8 +150,8 @@ export default class Chat extends React.Component {
 
       {/* fixes the keyboard entering the input box */}
       { Platform.OS === 'android' ? (
-                <KeyboardAvoidingView behavior="height"/>
-                ) : null
+        <KeyboardAvoidingView behavior="height"/>
+        ) : null
       }
       </View>
     )
