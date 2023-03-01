@@ -3,6 +3,9 @@ import { StyleSheet, View, Text, Platform, KeyboardAvoidingView } from "react-na
 import { Bubble, GiftedChat, InputToolbar } from 'react-native-gifted-chat';
 import AsyncStorage from "@react-native-async-storage/async-storage";
 import NetInfo from '@react-native-community/netinfo';
+import CustomActions from './CustomActions';
+import MapView from 'react-native-maps';
+import { ActionSheetProvider } from '@expo/react-native-action-sheet';
 
 // Google firebase / firestore
 const firebase = require('firebase');
@@ -169,6 +172,30 @@ export default class Chat extends React.Component {
     }
   };
 
+  renderCustomActions = (props) => {
+    return <CustomActions {...props} />;
+  };
+
+  renderCustomView (props) {
+    const { currentMessage } = props;
+    if (currentMessage.location) {
+      return (
+        <MapView
+          style={{width: 150,
+            height: 100,
+            borderRadius: 13,
+            margin: 3}}
+          region={{
+            latitude: currentMessage.location.latitude,
+            longitude: currentMessage.location.longitude,
+            latitudeDelta: 0.0922,
+            longitudeDelta: 0.0421,
+          }}
+        />
+      );
+    }
+    return null;
+  }
 
   renderBubble(props) {
     return (
@@ -188,16 +215,23 @@ export default class Chat extends React.Component {
     this.props.navigation.setOptions({ title: name })
     let color = this.props.route.params.color;
     return (
+      <ActionSheetProvider>
       <View style={[styles.container, { backgroundColor: color}]}>
       <GiftedChat
         renderBubble={this.renderBubble.bind(this)}
         messages={this.state.messages}
+        renderInputToolbar={this.renderInputToolbar.bind(this)}
+        renderActions={this.renderCustomActions.bind(this)}
+        renderCustomView={this.renderCustomView.bind(this)}
         onSend={(messages) => this.onSend(messages)}
         user={{
           _id: this.state.user._id,
-          avatar: 'https://placeimg.com/140/140/any',
+          avatar: 'https://static.wikia.nocookie.net/lotr/images/0/0a/Pippinprintscreen.jpg/revision/latest?cb=20060310083048',
           name: name
         }}
+          accessible={true}
+          accessibilityLabel="Text message input field."
+          accessibilityHint="You can type your message here.  You can send your message by pressing the button on the right."
       />
 
       {/* fixes the keyboard entering the input box */}
@@ -206,6 +240,7 @@ export default class Chat extends React.Component {
         ) : null
       }
       </View>
+      </ActionSheetProvider>
     )
   }
 }
