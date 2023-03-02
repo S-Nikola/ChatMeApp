@@ -56,7 +56,6 @@ export default class Chat extends React.Component {
   }
 
   componentDidMount() {
-    this.getMessages();
     NetInfo.fetch().then(connection => {
       if (connection.isConnected) {
         console.log('online');
@@ -81,9 +80,9 @@ export default class Chat extends React.Component {
         this.setState({
           uid: user.uid,
           messages: [],
+          isConnected: true,
           user: {
             _id: user.uid,
-            name: name,
           },
           loggedInText: '',
         });
@@ -93,6 +92,7 @@ export default class Chat extends React.Component {
           .onSnapshot(this.onCollectionUpdate);
       }
     );
+    this.getMessages();
   }
 
   // "unsubscribe" is to stop listening for changes from Firestore
@@ -102,27 +102,6 @@ export default class Chat extends React.Component {
       this.authUnsubscribe();
     }
   }
-
-  onCollectionUpdate = (querySnapshot) => {
-    const messages = [];
-    // go through each document
-    querySnapshot.forEach((doc) => {
-      // get the QueryDocumentSnapshot's data
-      let data = doc.data();
-      messages.push({
-        _id: data._id,
-        text: data.text,
-        createdAt: data.createdAt.toDate(),
-        user: {
-          _id: data.user._id,
-          name: data.user.name,
-          avatar: data.user.avatar || '',
-        }
-      });
-    });
-
-    this.setState({ messages });
-  };
 
   // add one message to firestore
   addMessage = () => {
@@ -146,11 +125,34 @@ export default class Chat extends React.Component {
       () => {
         // callback: after saving state, add message
         this.addMessage(messages);
-        this.saveMessages();
+        // this.saveMessages();
         
       }
     );
   }
+
+  onCollectionUpdate = (querySnapshot) => {
+    const messages = [];
+    // go through each document
+    querySnapshot.forEach((doc) => {
+      // get the QueryDocumentSnapshot's data
+      let data = doc.data();
+      messages.push({
+        _id: data._id,
+        text: data.text,
+        createdAt: data.createdAt.toDate(),
+        user: {
+          _id: data.user._id,
+          name: data.user.name,
+          avatar: data.user.avatar || '',
+        },
+        image: data.image || null,
+        location: data.location || null,
+      });
+    });
+
+    this.setState({ messages });
+  };
 
   async saveMessages() {
     try {
@@ -216,30 +218,29 @@ export default class Chat extends React.Component {
     let color = this.props.route.params.color;
     return (
       <ActionSheetProvider>
-      <View style={[styles.container, { backgroundColor: color}]}>
-      <GiftedChat
-        renderBubble={this.renderBubble.bind(this)}
-        messages={this.state.messages}
-        renderInputToolbar={this.renderInputToolbar.bind(this)}
-        renderActions={this.renderCustomActions.bind(this)}
-        renderCustomView={this.renderCustomView.bind(this)}
-        onSend={(messages) => this.onSend(messages)}
-        user={{
-          _id: this.state.user._id,
-          avatar: 'https://static.wikia.nocookie.net/lotr/images/0/0a/Pippinprintscreen.jpg/revision/latest?cb=20060310083048',
-          name: name
-        }}
-          accessible={true}
-          accessibilityLabel="Text message input field."
-          accessibilityHint="You can type your message here.  You can send your message by pressing the button on the right."
-      />
-
-      {/* fixes the keyboard entering the input box */}
-      { Platform.OS === 'android' ? (
-        <KeyboardAvoidingView behavior="height"/>
-        ) : null
-      }
-      </View>
+        <View style={[styles.container, { backgroundColor: color}]}>
+          <GiftedChat
+            renderBubble={this.renderBubble.bind(this)}
+            messages={this.state.messages}
+            renderInputToolbar={this.renderInputToolbar.bind(this)}
+            renderActions={this.renderCustomActions.bind(this)}
+            renderCustomView={this.renderCustomView.bind(this)}
+            onSend={(messages) => this.onSend(messages)}
+            user={{
+              _id: this.state.user._id,
+              avatar: 'https://static.wikia.nocookie.net/lotr/images/0/0a/Pippinprintscreen.jpg/revision/latest?cb=20060310083048',
+              name: name
+            }}
+              accessible={true}
+              accessibilityLabel="Text message input field."
+              accessibilityHint="You can type your message here.  You can send your message by pressing the button on the right."
+          />
+          {/* fixes the keyboard entering the input box */}
+          { Platform.OS === 'android' ? (
+            <KeyboardAvoidingView behavior="height"/>
+            ) : null
+          }
+        </View>
       </ActionSheetProvider>
     )
   }
